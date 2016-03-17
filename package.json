@@ -1,6 +1,6 @@
 {
-  "name": "typeeffect",
-  "version": "0.0.2",
+  "name": "typewriter-engine",
+  "version": "0.0.1",
   "description": "Typewriter simulation utility",
   "main": "index.js",
   "scripts": {

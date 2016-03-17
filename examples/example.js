@@ -1,9 +1,10 @@
-var TypeEffect = require("../index.js");
+var TypewriterEngine = require("../index.js");
 
 console.log("")
-var typeEffect = new TypeEffect({speed: 200})
 
-typeEffect.on('delete', function(char, str) {
+var engine = new TypewriterEngine({speed: 200})
+
+engine.on('delete', function(char, str) {
   console.log('\x1b[1A'+str+"|"+'\x1b[0K')
 })
 .on('type', function(char, str) {
@@ -12,7 +13,8 @@ typeEffect.on('delete', function(char, str) {
 .on('done', function(str) {
   console.log("DONE")
 })
-.type("Hello")
+
+engine.type("Hello")
 .del(5)
 .type("Hi John")
 .changeSpeed(100)

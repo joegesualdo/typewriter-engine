@@ -1,20 +1,20 @@
-## Type Effect 
+## Typewriter Engine
 > Typewriting simulation utility
 
 ## Install
 ```
-$ npm install --save typeeffect
+$ npm install --save typewriter-engine 
 ```
 
 ## Usage
 ```javascript
-var TypeEffect = require("typeeffect");
+var TypewriterEngine = require("typewriter-engine");
 
 console.log("")
 
-var typeEffect = new TypeEffect({speed: 200})
+var engine = new TypewriterEngine({speed: 200})
 
-typeEffect.on('delete', function(char, str) {
+engine.on('delete', function(char, str) {
   console.log('\x1b[1A'+str+"|"+'\x1b[0K')
 })
 .on('type', function(char, str) {
@@ -24,7 +24,7 @@ typeEffect.on('delete', function(char, str) {
   console.log("DONE")
 })
 
-typeEffect.type("Hello")
+engine.type("Hello")
 .del(5)
 .type("Hi John")
 .changeSpeed(100)
