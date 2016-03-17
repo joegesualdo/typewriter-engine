@@ -2,24 +2,28 @@ var Promise = require('bluebird');
 
 function TypeEffect(opts) {
   var opts = opts || {}
-  this.content = ""
+  this.content = "";
   this.onTick = function(){};
   this.onType = function(){};
   this.onDelete= function(){};
   this.speed = opts.speed || 1000
-  // Function that need to be run when we call .run()
-  this.fns = []
+  // Functions that will be run when we call .run()
+  this.fns = [];
 }
 
 TypeEffect.prototype.on = function(type, fn) {
-  if (type === 'tick') {
-    this.onTick = fn
-  }
-  if (type === 'type') {
-    this.onType = fn
-  }
-  if (type === 'delete') {
-    this.onDelete = fn
+  switch(type){
+    case 'tick':
+      this.onTick = fn;
+      break;
+    case 'type':
+      this.onType = fn;
+      break;
+    case 'delete':
+      this.onDelete = fn;
+      break;
+    default:
+      break;
   }
   return this;
 }
@@ -29,19 +33,17 @@ TypeEffect.prototype.type = function(chars) {
   var fn = function(){
     return new Promise(function(resolve, reject){
       for(var i = 0; i < chars.length; i++) {
-        (function(i, typeEffectInstance){
-          setTimeout(function(){
-            typeEffectInstance.content += chars[i]
-            typeEffectInstance.onTick(typeEffectInstance.content)
-            typeEffectInstance.onType(chars[i], typeEffectInstance.content)
-            if (i === chars.length - 1) {
-              // Wrapping this in a timeout so we have time when switching to another mode (I.e. del) 
-              setTimeout(function(){
-                resolve()
-              }, typeEffectInstance.speed)
-            }
-          }, i * typeEffectInstance.speed)
-        })(i, that)
+        setTimeout(function(i){
+          that.content += chars[i]
+          that.onTick(that.content)
+          that.onType(chars[i], that.content)
+          if (i === chars.length - 1) {
+            // Wrapping this in a timeout so we have time when switching to another mode (I.e. del) 
+            setTimeout(function(){
+              resolve()
+            }, that.speed)
+          }
+        }.bind(null, i), i * that.speed)
       }
     });
   }
@@ -54,20 +56,18 @@ TypeEffect.prototype.del = function(deleteCount) {
   var fn = function(){
     return new Promise(function(resolve, reject){
       for(var i = 0; i < deleteCount; i++) {
-        (function(i, typeEffectInstance){
-          setTimeout(function(){
-            var characterToDelete = typeEffectInstance.content[typeEffectInstance.content.length - 1]
-            typeEffectInstance.content = typeEffectInstance.content.slice(0, typeEffectInstance.content.length - 1)
-            typeEffectInstance.onTick(typeEffectInstance.content)
-            typeEffectInstance.onDelete(characterToDelete, typeEffectInstance.content)
+          setTimeout(function(i){
+            var charToDelete = that.content[that.content.length - 1]
+            that.content = that.content.slice(0, that.content.length - 1)
+            that.onTick(that.content)
+            that.onDelete(charToDelete, that.content)
             if (i === deleteCount - 1) {
               // Wrapping this in a timeout so we have time when switching to another mode (I.e. del) 
               setTimeout(function(){
                 resolve()
-              }, typeEffectInstance.speed)
+              }, that.speed)
             }
-          }, i * typeEffectInstance.speed)
-        })(i,typeEffect);
+          }.bind(null, i), i * that.speed)
       }
     })
   }
