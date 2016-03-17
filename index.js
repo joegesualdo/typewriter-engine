@@ -6,6 +6,8 @@ function TypeEffect(opts) {
   this.onTick = function(){};
   this.onType = function(){};
   this.onDelete= function(){};
+  this.onDone= function(){};
+  this.currentInterval;
   this.speed = opts.speed || 1000
   // Functions that will be run when we call .run()
   this.fns = [];
@@ -22,6 +24,9 @@ TypeEffect.prototype.on = function(type, fn) {
     case 'delete':
       this.onDelete = fn;
       break;
+    case 'done':
+      this.onDone = fn;
+      break;
     default:
       break;
   }
@@ -32,19 +37,19 @@ TypeEffect.prototype.type = function(chars) {
   var that = this;
   var fn = function(){
     return new Promise(function(resolve, reject){
-      for(var i = 0; i < chars.length; i++) {
-        setTimeout(function(i){
-          that.content += chars[i]
-          that.onTick(that.content)
-          that.onType(chars[i], that.content)
-          if (i === chars.length - 1) {
-            // Wrapping this in a timeout so we have time when switching to another mode (I.e. del) 
-            setTimeout(function(){
-              resolve()
-            }, that.speed)
-          }
-        }.bind(null, i), i * that.speed)
-      }
+      var i = 0;
+      var typeInterval = setInterval(function(){
+        that.content += chars[i]
+        that.onTick(that.content)
+        that.onType(chars[i], that.content)
+        if (i === chars.length - 1) {
+          clearInterval(typeInterval)
+          resolve()
+        } else {
+          i++;
+        }
+      }, that.speed)
+      that.currentInterval = typeInterval;
     });
   }
   this.fns.push(fn)
@@ -55,20 +60,20 @@ TypeEffect.prototype.del = function(deleteCount) {
   var that = this;
   var fn = function(){
     return new Promise(function(resolve, reject){
-      for(var i = 0; i < deleteCount; i++) {
-          setTimeout(function(i){
-            var charToDelete = that.content[that.content.length - 1]
-            that.content = that.content.slice(0, that.content.length - 1)
-            that.onTick(that.content)
-            that.onDelete(charToDelete, that.content)
-            if (i === deleteCount - 1) {
-              // Wrapping this in a timeout so we have time when switching to another mode (I.e. del) 
-              setTimeout(function(){
-                resolve()
-              }, that.speed)
-            }
-          }.bind(null, i), i * that.speed)
-      }
+      var i = 1;
+      var deleteInterval = setInterval(function(){
+        var charToDelete = that.content[that.content.length - 1]
+        that.content = that.content.slice(0, that.content.length - 1)
+        that.onTick(that.content)
+        that.onDelete(charToDelete, that.content)
+        if (i === deleteCount) {
+          clearInterval(deleteInterval)
+          resolve()
+        } else {
+          i++
+        }
+      }, that.speed)
+      that.currentInterval = deleteInterval;
     })
   }
   this.fns.push(fn)
@@ -78,6 +83,7 @@ TypeEffect.prototype.del = function(deleteCount) {
 TypeEffect.prototype.nextFn = function() {
   var that = this;
   if (this.fns.length === 0) {
+    this.onDone(this.content);
     return
   } else {
     this.fns[0]().then(function(){
@@ -87,29 +93,36 @@ TypeEffect.prototype.nextFn = function() {
   }
 }
 
-TypeEffect.prototype.run= function() {
+TypeEffect.prototype.wait = function(ms) {
+  var that = this;
+  var fn = function(){
+    return new Promise(function(resolve, reject){
+      setTimeout(function(){
+        resolve()
+      }, ms)
+    })
+  }
+  this.fns.push(fn)
+  return this;
+}
+TypeEffect.prototype.changeSpeed = function(speed) {
+  var that = this;
+  var fn = function(){
+    return new Promise(function(resolve, reject){
+      that.speed = speed;
+      resolve();
+    })
+  }
+  this.fns.push(fn)
+  return this;
+}
+
+TypeEffect.prototype.stop = function() {
+  clearInterval(this.currentInterval)
+}
+
+TypeEffect.prototype.run = function() {
   this.nextFn()
 }
 
-
-
-TypeEffect.prototype.wait = function(ms) {
-}
-
-console.log("")
-var typeEffect = new TypeEffect({speed: 200})
-
-typeEffect.on('delete', function(char, str) {
-  console.log('\x1b[1A'+str+"|"+'\x1b[0K')
-})
-.on('type', function(char, str) {
-  console.log('\x1b[1A\x1b[0K'+str+"|")
-})
-.type("Hello")
-.del(5)
-.type("Hi John")
-.del(4)
-.type("Joe! My weekend was terrible")
-.del(8)
-.type("amazing!")
-.run()
+module.exports = TypeEffect;
