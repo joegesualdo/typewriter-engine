@@ -1,7 +1,7 @@
 {
   "name": "typeeffect",
-  "version": "0.0.1",
-  "description": "Typewriter simulation",
+  "version": "0.0.2",
+  "description": "Typewriter simulation utility",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
